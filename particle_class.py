@@ -7,7 +7,7 @@ class Particle():
 
 
         #Define mass to determine Average Kinetic Energy and Temprature
-    mass = 2.9915e-20 # kg
+    mass = 1.9915e-20 # kg
     c = 3e8
 
     #initiate the class
@@ -16,9 +16,9 @@ class Particle():
         self.y_position = arr[1]
         self.z_position = arr[2]
         if vel_arr == None:
-            self.x_velocity = rand.uniform(-10,10)
-            self.y_velocity = rand.uniform(-10,10)
-            self.z_velocity = rand.uniform(-10,10)
+            self.x_velocity = rand.uniform(-10,10)*1e8
+            self.y_velocity = rand.uniform(-10,10)*1e8
+            self.z_velocity = rand.uniform(-10,10)*1e8
         else:
             self.x_velocity = vel_arr[0]
             self.y_velocity = vel_arr[1]
@@ -103,15 +103,38 @@ class Particle():
         self.y_velocity += step_size*k[1]
         self.z_velocity += step_size*k[2]
         if self.x_velocity >= 50:
-            print("Problem is here...")
             self.x_velocity = 50
         if self.y_velocity >= 50:
-            print("Problem is here...")
             self.y_velocity = 50
         if self.z_velocity >= 50:
-            print("Problem is here...")
             self.z_velocity = 50
 
+    def get_kinetic(self):
+        mass = 1.9915e-20 # kg
+        return 0.5*mass*(self.x_velocity**2+self.y_velocity**2+self.z_velocity**2)*1e-20
+
+    def monte_carlo(self, other, Temp, box):
+        random_number= rand.uniform(0,1)
+        kb = 1.3806e-23
+        check = True
+        while check:
+            random_array = [rand.uniform(-box,box),
+                    rand.uniform(-box,box),
+                    rand.uniform(-box,box)]
+            ghost = Particle(random_array,
+                    [self.x_velocity,self.y_velocity,self.z_velocity])
+            delta_pot = ghost.leonard_jones(other) - self.leonard_jones(other)
+            if delta_pot < 0:
+                check = False
+                self.x_position = ghost.x_position
+                self.y_position = ghost.y_position
+                self.z_position = ghost.z_position
+            elif np.exp(-delta_pot/(kb*Temp)) < random_number:
+                check = False
+                self.x_position = ghost.x_position
+                self.y_position = ghost.y_position
+                self.z_position = ghost.z_position
+"""
     def boundaries(self,box):
         if self.x_position >= box:
             if self.y_position >= box:
@@ -183,6 +206,6 @@ class Particle():
 
         else:
             return self.x_position,self.y_position,self.z_position,self.x_velocity,self.y_velocity,self.z_velocity
-
+"""
 
 

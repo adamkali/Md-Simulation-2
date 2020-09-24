@@ -1,3 +1,4 @@
+import time
 from sys import argv
 from random import uniform
 import matplotlib.pyplot as mp
@@ -16,7 +17,7 @@ box = float(argv[1])
 def initialize(box):
     xyz = open("input.xyz", "w")
 
-    for i in range(100):
+    for i in range(50):
         x, y, z = uniform(-box,box), uniform(-box,box), uniform(-box,box)
         print(x,y,z, file=xyz)
 
@@ -39,8 +40,8 @@ for p in range(size):
 fig = mp.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-adam = pc.Particle([0,0,0],[0,0,-10])
-sierra = pc.Particle([0,0,0],[0,0,10])
+adam = pc.Particle([0,0,0],[0,0,-5e9])
+sierra = pc.Particle([0,0,0],[0,0,5e9])
 
 particles = [adam,sierra]
 
@@ -49,27 +50,39 @@ def init():
         ax.scatter(p.x_position,p.y_position,p.z_position, c='b', marker='o')
 
 h = (1-0)/100
-t = np.arange(0,10,h)
+t = np.arange(0,1,h)
+total = len(t)
 
+time_array = []
+
+start_time = time.time()
 def animate(i):
-
+#for instance in t:
+    print(f"Iteration {i}/{total} starting...")
+    iteration_time = time.time()
     mp.cla()
     ax.set_ylim(-box,box)
     ax.set_xlim(-box,box)
     ax.set_zlim(-box,box)
-
+    temp = 0.0
+    kinetic_energy = 0.0
     for p in particle_array:
-        for i in particle_array:
-            if p != i:
-                p.verlet(i,h)
-
-        p.x_position, p.y_position, p.z_position, p.x_velocity, p.y_velocity, p.z_velocity = p.boundaries(box)
+        kinetic_energy += p.get_kinetic()
+    Temprature = (2/3)*kinetic_energy/1.38e-23
+    for p in particle_array:
+        for q in particle_array:
+            p.monte_carlo(q,Temprature,box)
         ax.scatter(p.x_position,p.y_position,p.z_position, c='b', marker='o')
 
-
+    iteration_time_final = time.time()
+    time_array.append(iteration_time_final - iteration_time)
+    print(f"Iteration {i}/{total} Complete\n")
+    print(f"Time elapsed:\t\t{time.time()-start_time}s")
 
 ani = ap.FuncAnimation(fig,animate,t,init_func=init)
-ani.save('myAnimation.mp4', writer='ffmpeg', fps=60)
+ani.save('mcAnimation.mp4', writer='ffmpeg', fps=60)
 
-
-
+fig = mp.figure()
+my_plot = fig.add_subplot()
+mp.plot(time_array)
+mp.show()
